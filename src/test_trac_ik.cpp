@@ -9,10 +9,12 @@ test_trac_ik::test_trac_ik(ros::NodeHandle& nh){
 
     std::string robot_description_string;
     this->nh_.param("robot_description", robot_description_string, std::string());
-
+    
     if (kdl_parser::treeFromString(robot_description_string, this->robot_tree_)){
-        
-        if (this->robot_tree_.getChain("world", "Jaco_link7", this->robot_chain_)){
+        auto root = this->robot_tree_.getRootSegment();
+        // std::map<std::string,KDL::TreeElement>& segments = this->robot_tree_.getSegments();
+        std::cout << root->first << std::endl;
+        if (this->robot_tree_.getChain("world", "j2n6s300_link_6", this->robot_chain_)){
             //pass
         }else{
             ROS_ERROR("Fail to get chain");
