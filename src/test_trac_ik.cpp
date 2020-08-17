@@ -3,7 +3,7 @@
 #include <iostream>
 #include <iomanip>
 
-test_trac_ik::test_trac_ik(ros::NodeHandle& nh){
+test_trac_ik::test_trac_ik(ros::NodeHandle& nh, std::string chainStart, std::string chainEnd, std::string roboType){
     this->isInitialized = false;
     this->isIDSet = false;
 
@@ -11,26 +11,10 @@ test_trac_ik::test_trac_ik(ros::NodeHandle& nh){
     this->nh_ = nh;
     this->client_ = new b0RemoteApi("b0RemoteApi_c++Client", "b0RemoteApi");
 
-    //initialize KDL solver
-    std::string robot_description_string;
-    this->nh_.param("robot_description", robot_description_string, std::string());
-    
-    if (kdl_parser::treeFromString(robot_description_string, this->robot_tree_)){
-        if (this->robot_tree_.getChain("world", "j2n6s300_link_6", this->robot_chain_)){
-            // successfully get chain
-            
-        }else{
-            ROS_ERROR("Fail to get chain");
-        }
-    }else{
-        ROS_ERROR("Fail to get tree");
-    }
-
     // initialize trac ik solver
-    this->trac_ik_solver_ = new TRAC_IK::TRAC_IK("world", "j2n6s300_link_6", "/robot_description", 0.05, 1e-5);
-    KDL::Chain chain;
-
-    bool valid = this->trac_ik_solver_->getKDLChain(chain);
+    this->trac_ik_solver_ = new TRAC_IK::TRAC_IK(chainStart, chainEnd, "/robot_description", 0.005, 1e-5, TRAC_IK::Speed);
+    
+    bool valid = this->trac_ik_solver_->getKDLChain(this->robot_chain_);
 
     if (!valid)
     {
@@ -44,11 +28,11 @@ test_trac_ik::test_trac_ik(ros::NodeHandle& nh){
         return;
     }
 
-    assert(chain.getNrOfJoints() == this->jntLowerLimit.data.size());
-    assert(chain.getNrOfJoints() == this->jntUpperLimit.data.size());
+    assert(this->robot_chain_.getNrOfJoints() == this->jntLowerLimit.data.size());
+    assert(this->robot_chain_.getNrOfJoints() == this->jntUpperLimit.data.size());
 
     this->isInitialized = true;
-    this->NrOfJnts = chain.getNrOfJoints();
+    this->NrOfJnts = this->robot_chain_.getNrOfJoints();
 
 }
 
@@ -69,10 +53,27 @@ double test_trac_ik::getJointValue(int objHandle){
     return 0;
 }
 
-void test_trac_ik::setJointValue(int objHandle, float jntValue){
-    auto res = this->client_->simxSetJointPosition(objHandle, jntValue, this->client_->simxServiceCall());
-    std::cout << (*res)[0] << std::endl;
-};
+
+bool test_trac_ik::setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout, double tolerance){
+    boost::posix_time::ptime start_time = boost::posix_time::microsec_clock::local_time();;
+    boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    auto res = this->client_->simxSetJointPosition(objHandle, targetJntValue, this->client_->simxServiceCall());
+    double jntFeedback;
+    while (diff.total_nanoseconds() / 1e9 < timeout) {
+        res = this->client_->simxSetJointPosition(objHandle, targetJntValue, this->client_->simxServiceCall());
+        auto data = this->client_->simxGetJointPosition(objHandle, this->client_->simxServiceCall());
+        (*data)[1].convert(jntFeedback);
+
+        if (abs(jntFeedback - targetJntValue) <= tolerance){
+            return true;
+        }
+
+        diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    }
+
+    ROS_ERROR("Joint actuation time out");
+    return false;
+}
 
 
 bool test_trac_ik::getJntID(){
@@ -147,20 +148,18 @@ bool test_trac_ik::moveToTargetJntAngle(std::vector<float> jntValue, double dura
 
 bool test_trac_ik::moveToTargetJntAngle(KDL::JntArray jntValue, double duration){
     if (this->isIDSet and jntValue.data.size() == this->NrOfJnts){
-        this->client_->simxSetJointPosition(this->jnt1ID_, jntValue.data[0], this->client_->simxServiceCall());
-        pause(duration);
-        this->client_->simxSetJointPosition(this->jnt2ID_, jntValue.data[1], this->client_->simxServiceCall());
-        pause(duration);
-        this->client_->simxSetJointPosition(this->jnt3ID_, jntValue.data[2], this->client_->simxServiceCall());
-        pause(duration);
-        this->client_->simxSetJointPosition(this->jnt4ID_, jntValue.data[3], this->client_->simxServiceCall());
-        pause(duration);
-        this->client_->simxSetJointPosition(this->jnt5ID_, jntValue.data[4], this->client_->simxServiceCall());
-        pause(duration);
-        this->client_->simxSetJointPosition(this->jnt6ID_, jntValue.data[5], this->client_->simxServiceCall());
-        pause(duration);
+        bool res = true;
+        res = this->setSingleJntValueForSure(this->jnt1ID_, jntValue.data[0]);
+        res = res and this->setSingleJntValueForSure(this->jnt2ID_, jntValue.data[1]);
+        res = res and this->setSingleJntValueForSure(this->jnt3ID_, jntValue.data[2]);
+        res = res and this->setSingleJntValueForSure(this->jnt4ID_, jntValue.data[3]);
+        res = res and this->setSingleJntValueForSure(this->jnt5ID_, jntValue.data[4]);
+        res = res and this->setSingleJntValueForSure(this->jnt6ID_, jntValue.data[5]);
 
-        return true;
+        if (!res){
+            ROS_ERROR("At least one joint was not fully actuated");
+        }
+        return res;
     }else{
         return false;
     }
@@ -191,7 +190,7 @@ bool test_trac_ik::moveToTargetPos(KDL::Frame targetPos){
 
         this->moveToTargetJntAngle(result);
         
-        pause(5.0);
+        pause(2);
         return true;
     }else {
         return false;

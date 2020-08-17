@@ -35,15 +35,16 @@ class test_trac_ik{
 
 
 public:
-    test_trac_ik(ros::NodeHandle& nh);
+    test_trac_ik(ros::NodeHandle& nh, std::string chainStart = "world", std::string chainEnd = "j2n6s300_link_6", std::string roboType = "j2n6s300");
     ~test_trac_ik();
 
     // test member function
     int getHandle(std::string objName );
     double getJointValue(int objHandle );
-    void setJointValue(int objHandle, float jntValue);
 
     // might be useful function
+    bool setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout = 1.0, double tolerance = 0.2);
+
     bool getJntID();
     bool getJntValue(KDL::JntArray& jntArray);
     void printJntID();

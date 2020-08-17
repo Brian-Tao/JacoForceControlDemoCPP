@@ -16,7 +16,7 @@ int main(int argc, char** argv){
     // std::cout << obj.getHandle("Jaco_joint1") << std::endl;
     // obj.getJointValue(obj.getHandle("Jaco_joint1"));
     // obj.setJointValue(obj.getHandle("Jaco_joint1"), -1.0);
-    // obj.setJointValue(obj.getHandle("Jaco_joint1"), -0.5);
+    // obj.setJointValue(obj.getHandle("Jaco_joint1"), 0.5);
 
     obj.getJntID();
     obj.printJntID();
@@ -32,5 +32,9 @@ int main(int argc, char** argv){
     KDL::Rotation Rot = KDL::Rotation::Identity();
     KDL::Frame targetPos(Pos);
     assert(obj.moveToTargetPos(targetPos));
+
+    KDL::Vector Pos2(0.0, 0.5, 0.1);
+    KDL::Frame targetPos2(Pos2);
+    assert(obj.moveToTargetPos(targetPos2));
     return 0;
 }
