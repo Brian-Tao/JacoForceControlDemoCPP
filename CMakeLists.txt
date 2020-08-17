@@ -121,21 +121,27 @@ include_directories(
 )
 include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/programming/b0RemoteApiBindings/cpp/msgpack-c/include")
 include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/programming/bluezero/include/b0/bindings")
+include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/")
 
 ## Declare a C++ library
  add_library(test_trac_ik_lib
    src/test_trac_ik.cpp
- )
+   src/b0RemoteApi.cpp )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME} 
+# "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libboost_filesystem.so.1.65.1"
+# "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libboost_program_options.so.1.65.1"
+# "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libboost_regex.so.1.65.1"
+# "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libboost_system.so.1.65.1"
+# "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libboost_thread.so.1.65.1")
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(JacoForceControlDemo_node src/JacoForceControlDemoNode.cpp src/test_trac_ik.cpp)
+add_executable(JacoForceControlDemo_node src/JacoForceControlDemoNode.cpp src/test_trac_ik.cpp src/b0RemoteApi.cpp)
 add_executable(test_node src/testing.cpp src/b0RemoteApi.cpp)
 
 ## Rename C++ executable without prefix
@@ -152,6 +158,7 @@ add_executable(test_node src/testing.cpp src/b0RemoteApi.cpp)
  target_link_libraries(JacoForceControlDemo_node
    ${catkin_LIBRARIES}
    test_trac_ik_lib
+   "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libb0.so"
  )
 
  target_link_libraries(test_node
