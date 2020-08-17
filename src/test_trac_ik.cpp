@@ -88,6 +88,31 @@ bool test_trac_ik::getJntID(){
     return true;
 }
 
+bool test_trac_ik::getJntValue(KDL::JntArray& jntArray){
+    if (isIDSet){
+        jntArray.resize(this->NrOfJnts);
+        float temp;
+        auto data = this->client_->simxGetJointPosition(this->jnt1ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[0]);
+        data = this->client_->simxGetJointPosition(this->jnt2ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[1]);
+        data = this->client_->simxGetJointPosition(this->jnt3ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[2]);
+        data = this->client_->simxGetJointPosition(this->jnt4ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[3]);
+        data = this->client_->simxGetJointPosition(this->jnt5ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[4]);
+        data = this->client_->simxGetJointPosition(this->jnt6ID_, this->client_->simxServiceCall());
+        (*data)[1].convert(jntArray.data[5]);
+
+        return true;
+
+    }else{
+        return false;
+    }
+
+}
+
 void test_trac_ik::printJntID(){
     if (this->isIDSet){
         std::cout << std::setw(4) << this->jnt1ID_
@@ -99,21 +124,78 @@ void test_trac_ik::printJntID(){
     }
 }
 
-bool test_trac_ik::moveToTargetJntAngle(std::vector<float> jntValue){
-    if (this->isInitialized and jntValue.size() == this->NrOfJnts){
+bool test_trac_ik::moveToTargetJntAngle(std::vector<float> jntValue, double duration){
+    if (this->isIDSet and jntValue.size() == this->NrOfJnts){
         this->client_->simxSetJointPosition(this->jnt1ID_, jntValue[0], this->client_->simxServiceCall());
+        pause(duration);
         this->client_->simxSetJointPosition(this->jnt2ID_, jntValue[1], this->client_->simxServiceCall());
+        pause(duration);
         this->client_->simxSetJointPosition(this->jnt3ID_, jntValue[2], this->client_->simxServiceCall());
+        pause(duration);
         this->client_->simxSetJointPosition(this->jnt4ID_, jntValue[3], this->client_->simxServiceCall());
+        pause(duration);
         this->client_->simxSetJointPosition(this->jnt5ID_, jntValue[4], this->client_->simxServiceCall());
+        pause(duration);
         this->client_->simxSetJointPosition(this->jnt6ID_, jntValue[5], this->client_->simxServiceCall());
+        pause(duration);
+        
+        return true;
     }else{
         return false;
     }
 }
 
-bool test_trac_ik::moveToTargetPos(KDL::Frame target_pos){
-    //TBD
+bool test_trac_ik::moveToTargetJntAngle(KDL::JntArray jntValue, double duration){
+    if (this->isIDSet and jntValue.data.size() == this->NrOfJnts){
+        this->client_->simxSetJointPosition(this->jnt1ID_, jntValue.data[0], this->client_->simxServiceCall());
+        pause(duration);
+        this->client_->simxSetJointPosition(this->jnt2ID_, jntValue.data[1], this->client_->simxServiceCall());
+        pause(duration);
+        this->client_->simxSetJointPosition(this->jnt3ID_, jntValue.data[2], this->client_->simxServiceCall());
+        pause(duration);
+        this->client_->simxSetJointPosition(this->jnt4ID_, jntValue.data[3], this->client_->simxServiceCall());
+        pause(duration);
+        this->client_->simxSetJointPosition(this->jnt5ID_, jntValue.data[4], this->client_->simxServiceCall());
+        pause(duration);
+        this->client_->simxSetJointPosition(this->jnt6ID_, jntValue.data[5], this->client_->simxServiceCall());
+        pause(duration);
+
+        return true;
+    }else{
+        return false;
+    }
+}
+
+bool test_trac_ik::moveToTargetPos(KDL::Frame targetPos){
+    if (this->isInitialized)
+    {   
+        KDL::JntArray curPos;
+        KDL::JntArray result;
+
+        if (!this->getJntValue(curPos)){
+            ROS_ERROR("Failed to get current values");
+            return false;
+        }
+
+        int res = this->trac_ik_solver_->CartToJnt(curPos, targetPos, result);
+
+        if (res < 0){
+            ROS_ERROR("Trac ik can't solve given frame");
+            return false;
+        }
+
+        this->getJntValue(curPos);
+        for (int i = 0; i < 6; ++i){
+            std::cout << std::setw(8) << result.data[i] << std::setw(8) << curPos.data[i] << std::endl;
+        }
+
+        this->moveToTargetJntAngle(result);
+        
+        pause(5.0);
+        return true;
+    }else {
+        return false;
+    }
 }
 
 std::vector<float> test_trac_ik::getNominalJntAngle(){
@@ -130,6 +212,17 @@ std::vector<float> test_trac_ik::getNominalJntAngle(){
     }
 }
 
+
+void test_trac_ik::pause(double duration){
+    /*
+    @breif pause for certain time, in seconds
+    */
+    boost::posix_time::ptime start_time = boost::posix_time::microsec_clock::local_time();;
+    boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    while (diff.total_nanoseconds() / 1e9 < duration){
+        diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    }
+}
 
 
 

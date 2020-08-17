@@ -4,6 +4,8 @@
 #include <ros/ros.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <trac_ik/trac_ik.hpp>
+#include <boost/date_time.hpp>
+
 #include "JacoForceControlCPP/b0RemoteApi.h"
 #include <string>
 
@@ -28,6 +30,9 @@ class test_trac_ik{
     KDL::JntArray jntLowerLimit;
     KDL::JntArray jntUpperLimit;
 
+    //auxiliary function
+    void pause(double duration);
+
 
 public:
     test_trac_ik(ros::NodeHandle& nh);
@@ -40,12 +45,16 @@ public:
 
     // might be useful function
     bool getJntID();
+    bool getJntValue(KDL::JntArray& jntArray);
     void printJntID();
-    bool moveToTargetJntAngle(std::vector<float> jntValue);
-    bool moveToTargetPos(KDL::Frame target_pos);
+    bool moveToTargetJntAngle(std::vector<float> jntValue, double duration = 0.005);
+    bool moveToTargetJntAngle(KDL::JntArray jntValue, double duration = 0.005);
+    bool moveToTargetPos(KDL::Frame targetPos);
 
     //auxiliary function
     std::vector<float> getNominalJntAngle();
+
+
 };
 
 #endif

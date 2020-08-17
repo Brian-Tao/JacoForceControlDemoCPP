@@ -21,7 +21,16 @@ int main(int argc, char** argv){
     obj.getJntID();
     obj.printJntID();
 
-    std::vector<float> target {-M_PI/2, M_PI/2, 3/2*M_PI, 3/2*M_PI, 3/2*M_PI, M_PI};
-    assert(obj.moveToTargetJntAngle(target));
+    // std::vector<float> target {-M_PI/2, M_PI/2, 3/2*M_PI, 3/2*M_PI, 3/2*M_PI, M_PI};
+    // assert(obj.moveToTargetJntAngle(target));
+    KDL::JntArray curPos;
+    if (!obj.getJntValue(curPos)){
+        ROS_ERROR("Failed to get current values");
+    }
+
+    KDL::Vector Pos(0.0, 0.5, 0.4);
+    KDL::Rotation Rot = KDL::Rotation::Identity();
+    KDL::Frame targetPos(Pos);
+    assert(obj.moveToTargetPos(targetPos));
     return 0;
 }
