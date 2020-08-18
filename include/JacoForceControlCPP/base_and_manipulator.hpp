@@ -18,7 +18,8 @@ class base_and_manipulator{
     b0RemoteApi* client_;
 
     bool isInitialized;
-    bool isIDSet;
+    bool isIDSet; // is manipulator ID set
+    bool isBaseIDSet;
 
     int NrOfJnts;
     int jnt1ID_;
@@ -27,6 +28,10 @@ class base_and_manipulator{
     int jnt4ID_;
     int jnt5ID_;
     int jnt6ID_;
+
+    int baseWorldConnectorID_;
+    int baseLeftMotorID_;
+    int baseRightMotorID_;
 
     KDL::JntArray jntLowerLimit;
     KDL::JntArray jntUpperLimit;
@@ -44,17 +49,29 @@ public:
     double getJointValue(int objHandle );
 
     // might be useful function
-    bool setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout = 5.0, double tolerance = 0.1);
-
     bool getJntID();
     bool getJntValue(KDL::JntArray& jntArray);
     void printJntID();
+
+    bool setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout = 5.0, double tolerance = 0.1);
     bool moveToTargetJntAngle(std::vector<float> jntValue, double duration = 0.005);
-    bool moveToTargetJntAngle(KDL::JntArray jntValue, double duration = 0.005);
+    bool moveToTargetJntAngle(KDL::JntArray jntValue, double duration = 0.005); // deprecated
     bool moveToTargetPos(KDL::Frame targetPos);
+
+
+    //mobile base function
+    bool getBaseID();
+    void printBaseID();
+    bool moveToTargetBasePos(double x, double y);
+    bool getManipRootPos(KDL::Frame& rootPos);
+    bool moveToTargetXPos(double xPos, double tolerance = 0.01);
+
 
     //auxiliary function
     std::vector<float> getNominalJntAngle();
+    bool moveBaseForward(double vel = 1.0);
+    bool moveBaseBackward(double vel = -1.0);
+    bool stopBase();
 
 
 };

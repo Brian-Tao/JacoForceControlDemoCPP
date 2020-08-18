@@ -6,6 +6,7 @@
 base_and_manipulator::base_and_manipulator(ros::NodeHandle& nh, std::string chainStart, std::string chainEnd, std::string roboType){
     this->isInitialized = false;
     this->isIDSet = false;
+    this->isBaseIDSet = false;
 
     // initialize nodehandle and remote api client
     this->nh_ = nh;
@@ -223,4 +224,115 @@ void base_and_manipulator::pause(double duration){
 }
 
 
+bool base_and_manipulator::getBaseID(){
+    this->baseWorldConnectorID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Pioneer_p3dx_connection7",this->client_->simxServiceCall()), 1);
+    this->baseLeftMotorID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Pioneer_p3dx_leftMotor",this->client_->simxServiceCall()), 1);
+    this->baseRightMotorID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Pioneer_p3dx_rightMotor",this->client_->simxServiceCall()), 1);
 
+    this->isBaseIDSet = true;
+
+    return true;
+}
+
+
+void base_and_manipulator::printBaseID(){
+    if (this->isBaseIDSet){
+        std::cout << std::setw(4) << this->baseWorldConnectorID_
+                    << std::setw(4) << this->baseLeftMotorID_
+                    << std::setw(4) << this->baseRightMotorID_ << std::endl;
+    }
+}
+
+
+bool base_and_manipulator::moveToTargetBasePos(double x, double y){
+    //pass
+}
+
+bool base_and_manipulator::moveBaseForward(double vel){
+    if (this->isBaseIDSet){
+        if (vel < 0){
+            ROS_ERROR("Positive input required");
+            return false;
+        }
+        this->client_->simxSetJointTargetVelocity(this->baseLeftMotorID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->baseRightMotorID_, vel, this->client_->simxServiceCall());
+        
+        return true;
+    }else {
+        return false;
+    }
+}
+
+ bool base_and_manipulator::moveBaseBackward(double vel){
+     if (this->isBaseIDSet){
+        if (vel > 0){
+            ROS_ERROR("Negative input required");
+            return false;
+        }
+        this->client_->simxSetJointTargetVelocity(this->baseLeftMotorID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->baseRightMotorID_, vel, this->client_->simxServiceCall());
+        
+        return true;
+    }else {
+        ROS_ERROR("Base ID is not set yet");
+        return false;
+    }
+ }
+
+ 
+bool base_and_manipulator::getManipRootPos(KDL::Frame& rootPos){
+    if (this->isBaseIDSet){
+        auto data = this->client_->simxGetObjectPose(this->baseWorldConnectorID_, -1, this->client_->simxServiceCall());
+        std::vector<double> Pos;
+        (*data)[1].convert(Pos);
+
+        rootPos.p.data[0] = Pos[0];
+        rootPos.p.data[1] = Pos[1];
+        rootPos.p.data[2] = Pos[2];
+
+        return true;
+    }else{
+        ROS_ERROR("Base ID is not set yet");
+        return false;
+    }
+}
+
+bool base_and_manipulator::moveToTargetXPos(double xPos, double tolerance){
+    KDL::Frame rootPos;
+
+    bool success = this->getManipRootPos(rootPos);
+    if (!success) {
+        ROS_ERROR("Can't obtain current base pos");
+        return false;
+    }
+
+    while (abs(xPos - rootPos.p.x()) >= tolerance){
+        if (xPos > rootPos.p.x()){
+            this->moveBaseForward();
+        }else{
+            this->moveBaseBackward();
+        }
+
+        success = this->getManipRootPos(rootPos);
+        if (!success) {
+            ROS_ERROR("Can't obtain current base pos");
+            return false;
+        }
+    }
+    
+    this->stopBase();
+    return true;
+    
+}
+
+bool base_and_manipulator::stopBase(){
+    if (this->isBaseIDSet){
+        this->client_->simxSetJointTargetVelocity(this->baseLeftMotorID_, 0, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->baseRightMotorID_, 0, this->client_->simxServiceCall());
+        
+        return true;
+    }else {
+        ROS_ERROR("Base ID is not set yet");
+        return false;
+    }
+}

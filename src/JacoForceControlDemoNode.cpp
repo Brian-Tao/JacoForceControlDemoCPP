@@ -6,6 +6,7 @@
 #include "math.h"
 #include <iostream>
 
+void pause(double duration);
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "JacoForceControlDemo_node");
@@ -28,13 +29,35 @@ int main(int argc, char** argv){
         ROS_ERROR("Failed to get current values");
     }
 
-    KDL::Vector Pos(0.0, 0.5, 0.4);
-    KDL::Rotation Rot = KDL::Rotation::Identity();
-    KDL::Frame targetPos(Pos);
-    assert(obj.moveToTargetPos(targetPos));
+    // KDL::Vector Pos(0.0, 0.5, 0.4);
+    // KDL::Rotation Rot = KDL::Rotation::Identity();
+    // KDL::Frame targetPos(Pos);
+    // assert(obj.moveToTargetPos(targetPos));
 
-    KDL::Vector Pos2(0.0, 0.5, 0.1);
-    KDL::Frame targetPos2(Pos2);
-    assert(obj.moveToTargetPos(targetPos2));
+    // KDL::Vector Pos2(0.0, 0.5, 0.1);
+    // KDL::Frame targetPos2(Pos2);
+    // assert(obj.moveToTargetPos(targetPos2));
+
+
+    obj.getBaseID();
+    obj.printBaseID();
+    pause(1);
+
+    assert(obj.moveToTargetXPos(0.5));
+    pause(2);
+    assert(obj.moveToTargetXPos(-0.5));
+
     return 0;
+}
+
+
+void pause(double duration){
+    /*
+    @breif pause for certain time, in seconds
+    */
+    boost::posix_time::ptime start_time = boost::posix_time::microsec_clock::local_time();;
+    boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    while (diff.total_nanoseconds() / 1e9 < duration){
+        diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    }
 }
