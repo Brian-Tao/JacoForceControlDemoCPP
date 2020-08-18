@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <trac_ik/trac_ik.hpp>
-#include "JacoForceControlCPP/test_trac_ik.hpp"
+#include "JacoForceControlCPP/base_and_manipulator.hpp"
 #include <assert.h>
 #include "math.h"
 #include <iostream>
@@ -12,7 +12,7 @@ int main(int argc, char** argv){
     ros::NodeHandle nh;
 
     //std::cout << "started" << std::endl;
-    test_trac_ik obj(nh);
+    base_and_manipulator obj(nh);
     // std::cout << obj.getHandle("Jaco_joint1") << std::endl;
     // obj.getJointValue(obj.getHandle("Jaco_joint1"));
     // obj.setJointValue(obj.getHandle("Jaco_joint1"), -1.0);

@@ -1,9 +1,9 @@
-#include "JacoForceControlCPP/test_trac_ik.hpp"
+#include "JacoForceControlCPP/base_and_manipulator.hpp"
 #include "JacoForceControlCPP/b0RemoteApi.h"
 #include <iostream>
 #include <iomanip>
 
-test_trac_ik::test_trac_ik(ros::NodeHandle& nh, std::string chainStart, std::string chainEnd, std::string roboType){
+base_and_manipulator::base_and_manipulator(ros::NodeHandle& nh, std::string chainStart, std::string chainEnd, std::string roboType){
     this->isInitialized = false;
     this->isIDSet = false;
 
@@ -36,14 +36,14 @@ test_trac_ik::test_trac_ik(ros::NodeHandle& nh, std::string chainStart, std::str
 
 }
 
-test_trac_ik::~test_trac_ik(){}
+base_and_manipulator::~base_and_manipulator(){}
 
-int test_trac_ik::getHandle(std::string objName){
+int base_and_manipulator::getHandle(std::string objName){
     int res = this->client_->readInt(this->client_->simxGetObjectHandle(objName.c_str(),this->client_->simxServiceCall()), 1);
     return res;
 }
 
-double test_trac_ik::getJointValue(int objHandle){
+double base_and_manipulator::getJointValue(int objHandle){
     auto jntValue = this->client_->simxGetJointPosition(objHandle, this->client_->simxServiceCall());
 
     for (auto msgBox : *jntValue){
@@ -54,7 +54,7 @@ double test_trac_ik::getJointValue(int objHandle){
 }
 
 
-bool test_trac_ik::setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout, double tolerance){
+bool base_and_manipulator::setSingleJntValueForSure(int objHandle, float targetJntValue, double timeout, double tolerance){
     boost::posix_time::ptime start_time = boost::posix_time::microsec_clock::local_time();;
     boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::local_time() - start_time;
     auto res = this->client_->simxSetJointPosition(objHandle, targetJntValue, this->client_->simxServiceCall());
@@ -76,7 +76,7 @@ bool test_trac_ik::setSingleJntValueForSure(int objHandle, float targetJntValue,
 }
 
 
-bool test_trac_ik::getJntID(){
+bool base_and_manipulator::getJntID(){
     this->jnt1ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Jaco_joint1",this->client_->simxServiceCall()), 1);
     this->jnt2ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Jaco_joint2",this->client_->simxServiceCall()), 1);
     this->jnt3ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("Jaco_joint3",this->client_->simxServiceCall()), 1);
@@ -89,10 +89,9 @@ bool test_trac_ik::getJntID(){
     return true;
 }
 
-bool test_trac_ik::getJntValue(KDL::JntArray& jntArray){
-    if (isIDSet){
+bool base_and_manipulator::getJntValue(KDL::JntArray& jntArray){
+    if (this->isIDSet){
         jntArray.resize(this->NrOfJnts);
-        float temp;
         auto data = this->client_->simxGetJointPosition(this->jnt1ID_, this->client_->simxServiceCall());
         (*data)[1].convert(jntArray.data[0]);
         data = this->client_->simxGetJointPosition(this->jnt2ID_, this->client_->simxServiceCall());
@@ -114,7 +113,7 @@ bool test_trac_ik::getJntValue(KDL::JntArray& jntArray){
 
 }
 
-void test_trac_ik::printJntID(){
+void base_and_manipulator::printJntID(){
     if (this->isIDSet){
         std::cout << std::setw(4) << this->jnt1ID_
                     << std::setw(4) << this->jnt2ID_
@@ -125,7 +124,7 @@ void test_trac_ik::printJntID(){
     }
 }
 
-bool test_trac_ik::moveToTargetJntAngle(std::vector<float> jntValue, double duration){
+bool base_and_manipulator::moveToTargetJntAngle(std::vector<float> jntValue, double duration){
     if (this->isIDSet and jntValue.size() == this->NrOfJnts){
         this->client_->simxSetJointPosition(this->jnt1ID_, jntValue[0], this->client_->simxServiceCall());
         pause(duration);
@@ -146,7 +145,7 @@ bool test_trac_ik::moveToTargetJntAngle(std::vector<float> jntValue, double dura
     }
 }
 
-bool test_trac_ik::moveToTargetJntAngle(KDL::JntArray jntValue, double duration){
+bool base_and_manipulator::moveToTargetJntAngle(KDL::JntArray jntValue, double duration){
     if (this->isIDSet and jntValue.data.size() == this->NrOfJnts){
         bool res = true;
         res = this->setSingleJntValueForSure(this->jnt1ID_, jntValue.data[0]);
@@ -165,7 +164,7 @@ bool test_trac_ik::moveToTargetJntAngle(KDL::JntArray jntValue, double duration)
     }
 }
 
-bool test_trac_ik::moveToTargetPos(KDL::Frame targetPos){
+bool base_and_manipulator::moveToTargetPos(KDL::Frame targetPos){
     if (this->isInitialized)
     {   
         KDL::JntArray curPos;
@@ -189,7 +188,7 @@ bool test_trac_ik::moveToTargetPos(KDL::Frame targetPos){
         }
 
         this->moveToTargetJntAngle(result);
-        
+
         pause(2);
         return true;
     }else {
@@ -197,7 +196,7 @@ bool test_trac_ik::moveToTargetPos(KDL::Frame targetPos){
     }
 }
 
-std::vector<float> test_trac_ik::getNominalJntAngle(){
+std::vector<float> base_and_manipulator::getNominalJntAngle(){
     if (this->isInitialized) {
         std::vector<float> returner;
         for (int i = 0; i < this->NrOfJnts; ++i){
@@ -212,7 +211,7 @@ std::vector<float> test_trac_ik::getNominalJntAngle(){
 }
 
 
-void test_trac_ik::pause(double duration){
+void base_and_manipulator::pause(double duration){
     /*
     @breif pause for certain time, in seconds
     */

@@ -124,8 +124,8 @@ include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/programming/bluezero/i
 include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/")
 
 ## Declare a C++ library
- add_library(test_trac_ik_lib
-   src/test_trac_ik.cpp
+ add_library(base_and_manipulator_lib
+   src/base_and_manipulator.cpp
    src/b0RemoteApi.cpp )
 
 ## Add cmake target dependencies of the library
@@ -141,7 +141,7 @@ include_directories("~/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/")
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(JacoForceControlDemo_node src/JacoForceControlDemoNode.cpp src/test_trac_ik.cpp src/b0RemoteApi.cpp)
+add_executable(JacoForceControlDemo_node src/JacoForceControlDemoNode.cpp src/base_and_manipulator.cpp src/b0RemoteApi.cpp)
 add_executable(test_node src/testing.cpp src/b0RemoteApi.cpp)
 
 ## Rename C++ executable without prefix
@@ -157,7 +157,7 @@ add_executable(test_node src/testing.cpp src/b0RemoteApi.cpp)
 ## Specify libraries to link a library or executable target against
  target_link_libraries(JacoForceControlDemo_node
    ${catkin_LIBRARIES}
-   test_trac_ik_lib
+   base_and_manipulator_lib
    "/home/brian-tao/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04/libb0.so"
  )
 
