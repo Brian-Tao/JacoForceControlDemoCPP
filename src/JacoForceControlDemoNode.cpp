@@ -21,6 +21,8 @@ int main(int argc, char** argv){
 
     obj.getJntID();
     obj.printJntID();
+    obj.getBaseID();
+    obj.printBaseID();
 
     // std::vector<float> target {-M_PI/2, M_PI/2, 3/2*M_PI, 3/2*M_PI, 3/2*M_PI, M_PI};
     // assert(obj.moveToTargetJntAngle(target));
@@ -29,23 +31,26 @@ int main(int argc, char** argv){
         ROS_ERROR("Failed to get current values");
     }
 
-    // KDL::Vector Pos(0.0, 0.5, 0.4);
-    // KDL::Rotation Rot = KDL::Rotation::Identity();
-    // KDL::Frame targetPos(Pos);
+    // Manipulator test
+    // KDL::Vector Pos(0.1, 0.4, 0.2);
+    // KDL::Rotation Rot = KDL::Rotation::RPY( M_PI / 2.0, -M_PI / 2, 0);
+    // KDL::Frame targetPos(Rot, Pos);
     // assert(obj.moveToTargetPos(targetPos));
 
     // KDL::Vector Pos2(0.0, 0.5, 0.1);
     // KDL::Frame targetPos2(Pos2);
     // assert(obj.moveToTargetPos(targetPos2));
 
+    // Base Test
+    // obj.getBaseID();
+    // obj.printBaseID();
+    // pause(1);
 
-    obj.getBaseID();
-    obj.printBaseID();
-    pause(1);
+    // assert(obj.moveToTargetXPos(0.5));
+    // pause(2);
+    // assert(obj.moveToTargetXPos(-0.5));
 
-    assert(obj.moveToTargetXPos(0.5));
-    pause(2);
-    assert(obj.moveToTargetXPos(-0.5));
+    obj.pick();
 
     return 0;
 }

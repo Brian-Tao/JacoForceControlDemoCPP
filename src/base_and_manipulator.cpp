@@ -146,21 +146,53 @@ bool base_and_manipulator::moveToTargetJntAngle(std::vector<float> jntValue, dou
     }
 }
 
-bool base_and_manipulator::moveToTargetJntAngle(KDL::JntArray jntValue, double duration){
+bool base_and_manipulator::moveToTargetJntAngle(KDL::JntArray jntValue, double duration, double timeout, double tolerance){
     if (this->isIDSet and jntValue.data.size() == this->NrOfJnts){
-        bool res = true;
-        res = this->setSingleJntValueForSure(this->jnt1ID_, jntValue.data[0]);
-        res = res and this->setSingleJntValueForSure(this->jnt2ID_, jntValue.data[1]);
-        res = res and this->setSingleJntValueForSure(this->jnt3ID_, jntValue.data[2]);
-        res = res and this->setSingleJntValueForSure(this->jnt4ID_, jntValue.data[3]);
-        res = res and this->setSingleJntValueForSure(this->jnt5ID_, jntValue.data[4]);
-        res = res and this->setSingleJntValueForSure(this->jnt6ID_, jntValue.data[5]);
+        boost::posix_time::ptime start_time = boost::posix_time::microsec_clock::local_time();;
+        boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::local_time() - start_time;
+        KDL::JntArray curPos;
+        std::vector<bool> progress(this->NrOfJnts, false);
+        int actIteration = 20;
+        
+        while (diff.total_nanoseconds() / 1e9 < timeout) {
+            bool flag = true;
+            if (!this->getJntValue(curPos)){
+                ROS_ERROR("Failed to get current values");
+                return false;
+            }
 
-        if (!res){
-            ROS_ERROR("At least one joint was not fully actuated");
+            for (int i = 0; i < this->NrOfJnts; ++i){
+                if (abs(jntValue.data[i] - curPos.data[i]) < tolerance){
+                    progress[i] = true;
+                }
+                flag = flag and progress[i];
+            }
+            
+            if (flag){
+                return true;
+            }else {
+                // run #actIteration loop
+                for (int i = 0; i < actIteration; ++i){
+                    if (!progress[0])
+                        this->client_->simxSetJointPosition(this->jnt1ID_, jntValue.data[0], this->client_->simxServiceCall());
+                    if (!progress[1])
+                        this->client_->simxSetJointPosition(this->jnt2ID_, jntValue.data[1], this->client_->simxServiceCall());
+                    if (!progress[2])
+                        this->client_->simxSetJointPosition(this->jnt3ID_, jntValue.data[2], this->client_->simxServiceCall());
+                    if (!progress[3])
+                        this->client_->simxSetJointPosition(this->jnt4ID_, jntValue.data[3], this->client_->simxServiceCall());
+                    if (!progress[4])
+                        this->client_->simxSetJointPosition(this->jnt5ID_, jntValue.data[4], this->client_->simxServiceCall());
+                    if (!progress[5])
+                        this->client_->simxSetJointPosition(this->jnt6ID_, jntValue.data[5], this->client_->simxServiceCall());
+                }
+            }
+            diff = boost::posix_time::microsec_clock::local_time() - start_time;
         }
-        return res;
+        ROS_ERROR("Actuation timed out");
+        return false;
     }else{
+        ROS_ERROR("Jnt ID is not set yet or wrong input size");
         return false;
     }
 }
@@ -244,7 +276,7 @@ void base_and_manipulator::printBaseID(){
 }
 
 
-bool base_and_manipulator::moveToTargetBasePos(double x, double y){
+bool base_and_manipulator::moveToTargetBasePos(double x, double y, double theta){
     //pass
 }
 
@@ -308,7 +340,7 @@ bool base_and_manipulator::moveToTargetXPos(double xPos, double tolerance){
 
     while (abs(xPos - rootPos.p.x()) >= tolerance){
         if (xPos > rootPos.p.x()){
-            this->moveBaseForward();
+            this->moveBaseForward(0.8);
         }else{
             this->moveBaseBackward();
         }
@@ -319,7 +351,7 @@ bool base_and_manipulator::moveToTargetXPos(double xPos, double tolerance){
             return false;
         }
     }
-    
+
     this->stopBase();
     return true;
     
@@ -335,4 +367,28 @@ bool base_and_manipulator::stopBase(){
         ROS_ERROR("Base ID is not set yet");
         return false;
     }
+}
+
+
+void base_and_manipulator::pick(){
+    assert(this->moveToTargetXPos(0.8));
+
+    KDL::Vector Pos(0, 0.4, 0.2);
+    KDL::Rotation Rot = KDL::Rotation::RPY( M_PI / 2.0, -M_PI / 2, 0);
+    KDL::Frame targetPos(Rot, Pos);
+    assert(this->moveToTargetPos(targetPos));
+    pause(1);
+
+    KDL::Vector Pos2(0, 0.5, 0.2);
+    KDL::Frame targetPos2(Rot, Pos2);
+    assert(this->moveToTargetPos(targetPos2));
+
+}
+
+
+void base_and_manipulator::openManipulator(){
+
+}
+void base_and_manipulator::closeManipulator(){
+
 }
