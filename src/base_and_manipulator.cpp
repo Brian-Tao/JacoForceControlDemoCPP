@@ -382,13 +382,49 @@ void base_and_manipulator::pick(){
     KDL::Vector Pos2(0, 0.5, 0.2);
     KDL::Frame targetPos2(Rot, Pos2);
     assert(this->moveToTargetPos(targetPos2));
+    pause(1);
+
+    KDL::Vector Pos3(0, 0.4, 0.3);
+    KDL::Frame targetPos3(Rot, Pos3);
+    assert(this->moveToTargetPos(targetPos3));
 
 }
 
+void base_and_manipulator::place(){
+    assert(this->moveToTargetXPos(-0.8));
+
+    KDL::Vector Pos(0, 0.5, 0.2);
+    KDL::Rotation Rot = KDL::Rotation::RPY( M_PI / 2.0, -M_PI / 2, 0);
+    KDL::Frame targetPos(Rot, Pos);
+    assert(this->moveToTargetPos(targetPos));
+    pause(1);
+
+}
+
+bool base_and_manipulator::getGripperID(){
+    this->finger12Motor1ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("JacoHand_fingers12_motor1",this->client_->simxServiceCall()), 1);
+    this->finger12Motor2ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("JacoHand_fingers12_motor2",this->client_->simxServiceCall()), 1);
+    this->finger3Motor1ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("JacoHand_finger3_motor1",this->client_->simxServiceCall()), 1);
+    this->finger3Motor2ID_ = this->client_->readInt(this->client_->simxGetObjectHandle("JacoHand_finger3_motor2",this->client_->simxServiceCall()), 1);
+
+    this->isGripperIDSet = true;
+
+    return true;
+}
+
+void base_and_manipulator::printGripperID(){
+    if (this->isGripperIDSet){
+        std::cout << std::setw(4) << this->finger12Motor1ID_
+                    << std::setw(4) << this->finger12Motor2ID_
+                    << std::setw(4) << this->finger3Motor1ID_
+                    << std::setw(4) << this->finger3Motor2ID_ << std::endl;
+    }
+}
 
 void base_and_manipulator::openManipulator(){
 
 }
+
 void base_and_manipulator::closeManipulator(){
 
 }

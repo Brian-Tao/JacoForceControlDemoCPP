@@ -20,6 +20,7 @@ class base_and_manipulator{
     bool isInitialized;
     bool isIDSet; // is manipulator ID set
     bool isBaseIDSet;
+    bool isGripperIDSet;
 
     int NrOfJnts;
     int jnt1ID_;
@@ -32,6 +33,11 @@ class base_and_manipulator{
     int baseWorldConnectorID_;
     int baseLeftMotorID_;
     int baseRightMotorID_;
+
+    int finger12Motor1ID_;
+    int finger12Motor2ID_;
+    int finger3Motor1ID_;
+    int finger3Motor2ID_;
 
     KDL::JntArray jntLowerLimit;
     KDL::JntArray jntUpperLimit;
@@ -75,6 +81,9 @@ public:
 
     //pick and place function
     void pick();
+    void place();
+    bool getGripperID();
+    void printGripperID();
     void openManipulator();
     void closeManipulator();
 

@@ -23,6 +23,8 @@ int main(int argc, char** argv){
     obj.printJntID();
     obj.getBaseID();
     obj.printBaseID();
+    obj.getGripperID();
+    obj.printGripperID();
 
     // std::vector<float> target {-M_PI/2, M_PI/2, 3/2*M_PI, 3/2*M_PI, 3/2*M_PI, M_PI};
     // assert(obj.moveToTargetJntAngle(target));
@@ -51,7 +53,7 @@ int main(int argc, char** argv){
     // assert(obj.moveToTargetXPos(-0.5));
 
     obj.pick();
-
+    obj.place();
     return 0;
 }
 
