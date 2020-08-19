@@ -216,8 +216,9 @@ bool base_and_manipulator::moveToTargetPos(KDL::Frame targetPos){
         }
 
         this->getJntValue(curPos);
+        std::cout << std::setw(20) << "Expected Jnt values" << std::setw(20) << "Current Jnt Values" << std::endl;
         for (int i = 0; i < 6; ++i){
-            std::cout << std::setw(8) << result.data[i] << std::setw(8) << curPos.data[i] << std::endl;
+            std::cout << std::setw(20) << result.data[i] << std::setw(20) << curPos.data[i] << std::endl;
         }
 
         this->moveToTargetJntAngle(result);
@@ -283,7 +284,7 @@ bool base_and_manipulator::moveToTargetBasePos(double x, double y, double theta)
 bool base_and_manipulator::moveBaseForward(double vel){
     if (this->isBaseIDSet){
         if (vel < 0){
-            ROS_ERROR("Positive input required");
+            ROS_ERROR("Expect positive input");
             return false;
         }
         this->client_->simxSetJointTargetVelocity(this->baseLeftMotorID_, vel, this->client_->simxServiceCall());
@@ -298,7 +299,7 @@ bool base_and_manipulator::moveBaseForward(double vel){
  bool base_and_manipulator::moveBaseBackward(double vel){
      if (this->isBaseIDSet){
         if (vel > 0){
-            ROS_ERROR("Negative input required");
+            ROS_ERROR("Expect negative input");
             return false;
         }
         this->client_->simxSetJointTargetVelocity(this->baseLeftMotorID_, vel, this->client_->simxServiceCall());
@@ -373,17 +374,24 @@ bool base_and_manipulator::stopBase(){
 void base_and_manipulator::pick(){
     assert(this->moveToTargetXPos(0.8));
 
+    std::cout << "Target pos 1" << std::endl;
     KDL::Vector Pos(0, 0.4, 0.2);
     KDL::Rotation Rot = KDL::Rotation::RPY( M_PI / 2.0, -M_PI / 2, 0);
     KDL::Frame targetPos(Rot, Pos);
     assert(this->moveToTargetPos(targetPos));
     pause(1);
 
+    std::cout << "Target pos 2" << std::endl;
     KDL::Vector Pos2(0, 0.5, 0.2);
     KDL::Frame targetPos2(Rot, Pos2);
     assert(this->moveToTargetPos(targetPos2));
     pause(1);
 
+    std::cout << "Closing gripper" << std::endl;
+    this->closeGripper();
+    pause(2);
+
+    std::cout << "Target pos 3" << std::endl;
     KDL::Vector Pos3(0, 0.4, 0.3);
     KDL::Frame targetPos3(Rot, Pos3);
     assert(this->moveToTargetPos(targetPos3));
@@ -393,11 +401,21 @@ void base_and_manipulator::pick(){
 void base_and_manipulator::place(){
     assert(this->moveToTargetXPos(-0.8));
 
+    std::cout << "Target pos 4" << std::endl;
     KDL::Vector Pos(0, 0.5, 0.2);
     KDL::Rotation Rot = KDL::Rotation::RPY( M_PI / 2.0, -M_PI / 2, 0);
     KDL::Frame targetPos(Rot, Pos);
     assert(this->moveToTargetPos(targetPos));
     pause(1);
+
+    std::cout << "Opening gripper" << std::endl;
+    this->openGripper();
+    pause(2);
+
+    std::cout << "Target pos 5" << std::endl;
+    KDL::Vector Pos2(0, 0.4, 0.2);
+    KDL::Frame targetPos2(Rot, Pos2);
+    assert(this->moveToTargetPos(targetPos2));
 
 }
 
@@ -421,10 +439,34 @@ void base_and_manipulator::printGripperID(){
     }
 }
 
-void base_and_manipulator::openManipulator(){
-
+void base_and_manipulator::openGripper(double vel){
+    if (this->isGripperIDSet){
+        if (vel < 0){
+            ROS_ERROR("Expect positive input");
+            return;
+        }
+        this->client_->simxSetJointTargetVelocity(this->finger12Motor1ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger12Motor2ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger3Motor1ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger3Motor2ID_, vel, this->client_->simxServiceCall());
+    }else{
+        ROS_ERROR("Gripper ID is not set yet");
+        return;
+    }
 }
 
-void base_and_manipulator::closeManipulator(){
-
+void base_and_manipulator::closeGripper(double vel){
+    if (this->isGripperIDSet){
+        if (vel > 0){
+            ROS_ERROR("Expect negative input");
+            return;
+        }
+        this->client_->simxSetJointTargetVelocity(this->finger12Motor1ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger12Motor2ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger3Motor1ID_, vel, this->client_->simxServiceCall());
+        this->client_->simxSetJointTargetVelocity(this->finger3Motor2ID_, vel, this->client_->simxServiceCall());
+    }else{
+        ROS_ERROR("Gripper ID is not set yet");
+        return;
+    }
 }

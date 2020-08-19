@@ -52,6 +52,10 @@ int main(int argc, char** argv){
     // pause(2);
     // assert(obj.moveToTargetXPos(-0.5));
 
+    // Gripper Test
+    // obj.closeGripper();
+    // pause(1);
+    
     obj.pick();
     obj.place();
     return 0;

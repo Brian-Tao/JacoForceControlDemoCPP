@@ -84,8 +84,8 @@ public:
     void place();
     bool getGripperID();
     void printGripperID();
-    void openManipulator();
-    void closeManipulator();
+    void openGripper(double vel = 0.04);
+    void closeGripper(double vel = -0.04);
 
 
 };
